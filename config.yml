@@ -1,0 +1,6 @@
+---
+zones_api_url: https://dns.hetzner.com/api/v1/zones
+records_api_url: https://dns.hetzner.com/api/v1/records
+access_token: lalabimmelsecrettoken
+zone_name: myzone.whatever
+record_name: myhostname
