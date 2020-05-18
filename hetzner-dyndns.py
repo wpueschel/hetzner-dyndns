@@ -87,8 +87,6 @@ def create_record(config):
 def update_record(config):
     print("UPDATE")
 
-
-main()
-
-exit()
+if __name__ == "__main__":
+    main()
 
