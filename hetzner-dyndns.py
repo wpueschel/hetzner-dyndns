@@ -14,12 +14,10 @@ def main():
     config["record_id"], config["record_ip"] = get_record(config)
 
     print('{:<12} {}'.format("External IP:", config["external_ip"]))
-    print('{:<12} {}'.format("Zone ID:", config["zone_id"]))
-    print('{:<12} {}'.format("Record ID:", config["record_id"]))
     print('{:<12} {}'.format("Record IP:", config["record_ip"]))
 
     if config["external_ip"] == config["record_ip"]:
-        print('External IP {} is Record IP {}.'.format(config["external_ip"], config["record_ip"]))
+        print("Nothing to do.")
         sys.exit(0)
 
     if config["record_id"]:
@@ -60,6 +58,7 @@ def get_zone_id(config):
 
         for zone in zones:
             if zone["name"] == config["zone_name"]:
+                print('{:<12} {}'.format("Zone ID:", zone["id"]))
                 return (zone["id"])
 
         return False
@@ -80,6 +79,7 @@ def get_record(config):
 
         for record in records:
             if record["name"] == config["record_name"]:
+                print('{:<12} {}'.format("Record ID:",record["id"]))
                 return record["id"], record["value"]
 
         return False, False
@@ -107,9 +107,9 @@ def update_record(config):
         if response.status_code != 200:
             print("Update failed with http_status_code: {}.".format(response.status_code))
             print("Response HTTP Response Body: {}".format(response.content))
-            return False
+            return response.status_code
 
-        return True
+        return 0
 
     except requests.exceptions.RequestException:
         print('HTTP Request failed')
@@ -118,7 +118,7 @@ def create_record(config):
 
     print("CREATE")
 
-    return
+    return 0
 
 if __name__ == "__main__":
     main()
