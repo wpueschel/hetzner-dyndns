@@ -6,10 +6,19 @@ import json
 import requests
 
 def main():
-    config_file = "config.yml"
-    config = read_config(config_file)
+    # Check if we have a config file as argument
+    if len(sys.argv) > 1:
+        config_file = sys.argv[1]
+    # Default config file
+    else:
+        config_file = "config.yaml"
 
-    config["external_ip"] = get_external_ip()
+    config = read_config(config_file)
+    if config:
+        config["external_ip"] = get_external_ip()
+    else:
+       sys.exit(1)
+
     config["zone_id"] = get_zone_id(config)
     config["record_id"], config["record_ip"] = get_record(config)
 
@@ -29,12 +38,17 @@ def main():
 
 
 def read_config(config_file):
-    with open(config_file, 'r') as cf:
+    try:
+        cf = open(config_file, 'r')
         try:
             config = yaml.safe_load(cf)
             return config
-        except yaml.YAMLError as exc:
-            print(exc)
+        except yaml.YAMLError as err:
+            print("Could not read yaml:\n{}".format(err))
+            return False
+    except FileNotFoundError as err:
+        print("Config file not found:\n{}".format(err))
+        return False
 
 
 def get_external_ip():
