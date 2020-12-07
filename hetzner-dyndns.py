@@ -5,6 +5,7 @@ import yaml
 import json
 import requests
 
+
 def main():
     # Check if we have a config file as argument
     if len(sys.argv) > 1:
@@ -17,7 +18,7 @@ def main():
     if config:
         config["external_ip"] = get_external_ip()
     else:
-       sys.exit(1)
+        sys.exit(1)
 
     config["zone_id"] = get_zone_id(config)
     config["record_id"], config["record_ip"] = get_record(config)
@@ -46,8 +47,8 @@ def read_config(config_file):
         print("Config file not found:\n{}".format(err))
         return False
     except yaml.YAMLError as err:
-            print("Could not read yaml:\n{}".format(err))
-            return False
+        print("Could not read yaml:\n{}".format(err))
+        return False
 
 
 def get_external_ip():
@@ -63,8 +64,8 @@ def get_external_ip():
 def get_zone_id(config):
     try:
         response = requests.get(
-            url = config["zones_api_url"],
-            headers = {"Auth-API-Token": config["access_token"]},
+            url=config["zones_api_url"],
+            headers={"Auth-API-Token": config["access_token"]},
         )
 
         zones = json.loads(response.content)["zones"]
@@ -83,16 +84,16 @@ def get_zone_id(config):
 def get_record(config):
     try:
         response = requests.get(
-            url = config["records_api_url"],
-            params = {"zone_id": config["zone_id"]},
-            headers = {"Auth-API-Token": config["access_token"]},
+            url=config["records_api_url"],
+            params={"zone_id": config["zone_id"]},
+            headers={"Auth-API-Token": config["access_token"]},
         )
 
         records = json.loads(response.content)["records"]
 
         for record in records:
             if record["name"] == config["record_name"]:
-                print('{:<12} {}'.format("Record ID:",record["id"]))
+                print('{:<12} {}'.format("Record ID:", record["id"]))
                 return record["id"], record["value"]
 
         return False, False
@@ -102,13 +103,14 @@ def get_record(config):
 
 
 def update_record(config):
-    print("Updating record with new external IP {}:".format(config["external_ip"]))
+    print("Updating record with new external IP {}:".format(
+        config["external_ip"]))
 
     try:
         response = requests.put(
-            url = config["records_api_url"] + "/" + config["record_id"],
-            headers = {"Auth-API-Token": config["access_token"]},
-            data = json.dumps({
+            url=config["records_api_url"] + "/" + config["record_id"],
+            headers={"Auth-API-Token": config["access_token"]},
+            data=json.dumps({
                 "value": config["external_ip"],
                 "ttl": 600,
                 "type": "A",
@@ -118,7 +120,8 @@ def update_record(config):
         )
 
         if response.status_code != 200:
-            print("Update failed with http_status_code: {}.".format(response.status_code))
+            print("Update failed with http_status_code: {}.".format(
+                response.status_code))
             print("Response HTTP Response Body: {}".format(response.content))
             return response.status_code
 
@@ -127,12 +130,13 @@ def update_record(config):
     except requests.exceptions.RequestException:
         print('HTTP Request failed')
 
+
 def create_record(config):
 
     print("CREATE")
 
     return 0
 
+
 if __name__ == "__main__":
     main()
-
