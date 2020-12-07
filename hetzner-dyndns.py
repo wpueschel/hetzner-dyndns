@@ -123,7 +123,7 @@ def update_record(config):
             headers={"Auth-API-Token": config["access_token"]},
             data=json.dumps({
                 "value": config["external_ip"],
-                "ttl": 600,
+                "ttl": config["record_ttl"],
                 "type": "A",
                 "name": config["record_name"],
                 "zone_id": config["zone_id"]
