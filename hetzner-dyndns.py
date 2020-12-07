@@ -40,15 +40,14 @@ def main():
 def read_config(config_file):
     try:
         cf = open(config_file, 'r')
-        try:
-            config = yaml.safe_load(cf)
-            return config
-        except yaml.YAMLError as err:
-            print("Could not read yaml:\n{}".format(err))
-            return False
+        config = yaml.safe_load(cf)
+        return config
     except FileNotFoundError as err:
         print("Config file not found:\n{}".format(err))
         return False
+    except yaml.YAMLError as err:
+            print("Could not read yaml:\n{}".format(err))
+            return False
 
 
 def get_external_ip():
