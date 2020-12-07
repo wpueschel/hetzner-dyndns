@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import sys
 import yaml
 import json
@@ -51,6 +52,14 @@ def read_config(config_file):
         return False
 
 
+def create_cache_dir(config):
+    if not os.path.isdir(config["cache_dir"]):
+        cache_dir_mode = 0o600
+        os.mkdir(config["cache_dir"], cache_dir_mode)
+
+    return 0
+
+
 def get_external_ip():
     try:
         response = requests.get(url="https://api.ipify.org")
@@ -73,6 +82,7 @@ def get_zone_id(config):
         for zone in zones:
             if zone["name"] == config["zone_name"]:
                 print('{:<12} {}'.format("Zone ID:", zone["id"]))
+                # Write zone info json to cache_dir
                 return (zone["id"])
 
         return False
@@ -94,6 +104,7 @@ def get_record(config):
         for record in records:
             if record["name"] == config["record_name"]:
                 print('{:<12} {}'.format("Record ID:", record["id"]))
+                # Write record info json to cache_dir
                 return record["id"], record["value"]
 
         return False, False
@@ -132,9 +143,7 @@ def update_record(config):
 
 
 def create_record(config):
-
     print("CREATE")
-
     return 0
 
 
