@@ -22,8 +22,7 @@ def read_config(config_file):
 
 def create_cache_dir(config):
     if not os.path.isdir(config["cache_dir"]):
-        cache_dir_mode = 0o700
-        os.mkdir(config["cache_dir"], cache_dir_mode)
+        os.mkdir(config["cache_dir"], 0o700)
     return 0
 
 
