@@ -7,38 +7,6 @@ import json
 import requests
 
 
-def main():
-    # Check if we have a config file as argument
-    if len(sys.argv) > 1:
-        config_file = sys.argv[1]
-    # Default config file
-    else:
-        config_file = "config.yaml"
-
-    config = read_config(config_file)
-    if config:
-        config["external_ip"] = get_external_ip()
-    else:
-        sys.exit(1)
-
-    config["zone_id"] = get_zone_id(config)
-    config["record_id"], config["record_ip"] = get_record(config)
-
-    print('{:<12} {}'.format("External IP:", config["external_ip"]))
-    print('{:<12} {}'.format("Record IP:", config["record_ip"]))
-
-    if config["external_ip"] == config["record_ip"]:
-        print("Nothing to do.")
-        sys.exit(0)
-
-    if config["record_id"]:
-        rt = update_record(config)
-    else:
-        rt = create_record(config)
-
-    sys.exit(rt)
-
-
 def read_config(config_file):
     try:
         cf = open(config_file, 'r')
@@ -56,7 +24,6 @@ def create_cache_dir(config):
     if not os.path.isdir(config["cache_dir"]):
         cache_dir_mode = 0o600
         os.mkdir(config["cache_dir"], cache_dir_mode)
-
     return 0
 
 
@@ -72,23 +39,33 @@ def get_external_ip():
 
 def get_zone_id(config):
     try:
-        response = requests.get(
-            url=config["zones_api_url"],
-            headers={"Auth-API-Token": config["access_token"]},
-        )
+        zcache = config["cache_dir"] + "/zone.json"
+        zcf = open(zcache, 'r')
+        zone = json.loads(zfc)
+        return zone["id"]
 
-        zones = json.loads(response.content)["zones"]
+    except FileNotFoundError:
+        try:
+            response = requests.get(
+                url=config["zones_api_url"],
+                headers={"Auth-API-Token": config["access_token"]},
+            )
+            zones = json.loads(response.content)["zones"]
 
-        for zone in zones:
-            if zone["name"] == config["zone_name"]:
-                print('{:<12} {}'.format("Zone ID:", zone["id"]))
-                # Write zone info json to cache_dir
-                return (zone["id"])
+            for zone in zones:
+                if zone["name"] == config["zone_name"]:
+                    print('{:<12} {}'.format("Zone ID:", zone["id"]))
+                    with open(zcache, 'w') as zcf:
+                        zcf.write(json.dumps(zone))
+                    return (zone["id"])
 
-        return False
+            return False
 
-    except requests.exceptions.RequestException:
-        print('HTTP Request failed')
+        except requests.exceptions.RequestException:
+            print('Zone HTTP Request failed')
+            return False
+
+    # except json unmarshall error?
 
 
 def get_record(config):
@@ -145,6 +122,38 @@ def update_record(config):
 def create_record(config):
     print("CREATE")
     return 0
+
+
+def main():
+    # Check if we have a config file as argument
+    if len(sys.argv) > 1:
+        config_file = sys.argv[1]
+    # Default config file
+    else:
+        config_file = "config.yaml"
+
+    config = read_config(config_file)
+    if config:
+        config["external_ip"] = get_external_ip()
+    else:
+        sys.exit(1)
+
+    config["zone_id"] = get_zone_id(config)
+    config["record_id"], config["record_ip"] = get_record(config)
+
+    print('{:<12} {}'.format("External IP:", config["external_ip"]))
+    print('{:<12} {}'.format("Record IP:", config["record_ip"]))
+
+    if config["external_ip"] == config["record_ip"]:
+        print("Nothing to do.")
+        sys.exit(0)
+
+    if config["record_id"]:
+        rt = update_record(config)
+    else:
+        rt = create_record(config)
+
+    sys.exit(rt)
 
 
 if __name__ == "__main__":
