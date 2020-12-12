@@ -22,7 +22,7 @@ def read_config(config_file):
 
 def create_cache_dir(config):
     if not os.path.isdir(config["cache_dir"]):
-        cache_dir_mode = 0o600
+        cache_dir_mode = 0o700
         os.mkdir(config["cache_dir"], cache_dir_mode)
     return 0
 
@@ -41,7 +41,8 @@ def get_zone_id(config):
     try:
         zcache = config["cache_dir"] + "/zone.json"
         zcf = open(zcache, 'r')
-        zone = json.loads(zfc)
+        zone = json.loads(zcf.read())
+        print('{:<12} {}'.format("Zone ID:", zone["id"]))
         return zone["id"]
 
     except FileNotFoundError:
