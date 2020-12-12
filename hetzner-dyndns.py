@@ -138,6 +138,8 @@ def main():
     else:
         sys.exit(1)
 
+    create_cache_dir(config)
+
     config["zone_id"] = get_zone_id(config)
     config["record_id"], config["record_ip"] = get_record(config)
 
