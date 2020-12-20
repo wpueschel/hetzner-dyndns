@@ -20,10 +20,15 @@ def read_config(config_file):
         return False
 
 
-def create_cache_dir(config):
-    if not os.path.isdir(config["cache_dir"]):
-        os.mkdir(config["cache_dir"], 0o700)
+def create_cache_dir(cdir):
+    if not os.path.isdir(cdir):
+        os.mkdir(cdir, 0o700)
     return 0
+
+
+def write_cache(cache_file, data):
+    with open(cache_file, 'w') as cf:
+        cf.write(json.dumps(data))
 
 
 def get_external_ip():
@@ -33,7 +38,7 @@ def get_external_ip():
         return external_ip
 
     except requests.exceptions.RequestException:
-        print('HTTP Request failed')
+        print('External IP HTTP Request failed')
 
 
 def get_zone_id(config):
@@ -55,8 +60,7 @@ def get_zone_id(config):
             for zone in zones:
                 if zone["name"] == config["zone_name"]:
                     print('{:<12} {}'.format("Zone ID:", zone["id"]))
-                    with open(zcache, 'w') as zcf:
-                        zcf.write(json.dumps(zone))
+                    write_cache(zcache, zone)
                     return (zone["id"])
 
             return False
@@ -70,24 +74,32 @@ def get_zone_id(config):
 
 def get_record(config):
     try:
-        response = requests.get(
-            url=config["records_api_url"],
-            params={"zone_id": config["zone_id"]},
-            headers={"Auth-API-Token": config["access_token"]},
-        )
+        rcache = config["cache_dir"] + "/record.json"
+        rcf = open(rcache, 'r')
+        record = json.loads(rcf.read())
+        print('{:<12} {}'.format("Record ID:", record["id"]))
+        return record["id"], record["value"]
 
-        records = json.loads(response.content)["records"]
+    except FileNotFoundError:
+        try:
+            response = requests.get(
+                url=config["records_api_url"],
+                params={"zone_id": config["zone_id"]},
+                headers={"Auth-API-Token": config["access_token"]},
+            )
 
-        for record in records:
-            if record["name"] == config["record_name"]:
-                print('{:<12} {}'.format("Record ID:", record["id"]))
-                # Write record info json to cache_dir
-                return record["id"], record["value"]
+            records = json.loads(response.content)["records"]
 
-        return False, False
+            for record in records:
+                if record["name"] == config["record_name"]:
+                    print('{:<12} {}'.format("Record ID:", record["id"]))
+                    write_cache(rcache, record)
+                    return record["id"], record["value"]
 
-    except requests.exceptions.RequestException:
-        print('HTTP Request failed')
+            return False, False
+
+        except requests.exceptions.RequestException:
+            print('HTTP Request failed')
 
 
 def update_record(config):
@@ -138,7 +150,7 @@ def main():
     else:
         sys.exit(1)
 
-    create_cache_dir(config)
+    create_cache_dir(config["cache_dir"])
 
     config["zone_id"] = get_zone_id(config)
     config["record_id"], config["record_ip"] = get_record(config)
