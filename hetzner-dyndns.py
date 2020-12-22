@@ -5,7 +5,7 @@ import sys
 import yaml
 import json
 import requests
-
+import exceptions
 
 def read_config(config_file):
     try:
@@ -46,10 +46,17 @@ def get_zone_id(config):
         zcache = config["cache_dir"] + "/zone.json"
         zcf = open(zcache, 'r')
         zone = json.loads(zcf.read())
+
+        # Check if cache is stale and we have old/different
+        # zone data
+        if config["zone_name"] != zone["name"]:
+            raise exceptions.StaleCacheError
+
         print('{:<12} {}'.format("Zone ID:", zone["id"]))
+
         return zone["id"]
 
-    except FileNotFoundError:
+    except (FileNotFoundError, exceptions.StaleCacheError):
         try:
             response = requests.get(
                 url=config["zones_api_url"],
@@ -78,7 +85,19 @@ def get_record(config):
         rcf = open(rcache, 'r')
         record = json.loads(rcf.read())
         print('{:<12} {}'.format("Record ID:", record["id"]))
+
+        # Check if cache is stale/we (have a new record name and
+        # an old cache)
+        if config["record_name"] != record["name"]:
+            raise exceptions.StaleCacheError
+
+        if config["zone_id"] != record["zone_id"]:
+            raise exceptions.StaleCacheError
+
         return record["id"], record["value"]
+
+    except exceptions.StaleCacheError:
+        return False, False
 
     except FileNotFoundError:
         try:
