@@ -7,6 +7,7 @@ import json
 import requests
 import exceptions
 
+
 def read_config(config_file):
     try:
         cf = open(config_file, 'r')
@@ -22,8 +23,13 @@ def read_config(config_file):
 
 def create_cache_dir(cdir):
     if not os.path.isdir(cdir):
-        os.mkdir(cdir, 0o700)
-    return 0
+        try:
+            os.mkdir(cdir, 0o700)
+            return True
+        except:
+            return False
+
+    return True
 
 
 def write_cache(cache_file, data):
@@ -39,6 +45,7 @@ def get_external_ip():
 
     except requests.exceptions.RequestException:
         print('External IP HTTP Request failed')
+        sys.exit(1)
 
 
 def get_zone_id(config):
@@ -53,7 +60,6 @@ def get_zone_id(config):
             raise exceptions.StaleCacheError
 
         print('{:<12} {}'.format("Zone ID:", zone["id"]))
-
         return zone["id"]
 
     except (FileNotFoundError, exceptions.StaleCacheError):
@@ -74,7 +80,7 @@ def get_zone_id(config):
 
         except requests.exceptions.RequestException:
             print('Zone HTTP Request failed')
-            return False
+            sys.exit(1)
 
     # except json unmarshall error?
 
@@ -118,7 +124,8 @@ def get_record(config):
             return False, False
 
         except requests.exceptions.RequestException:
-            print('HTTP Request failed')
+            print('Record HTTP Request failed')
+            sys.exit(1)
 
 
 def update_record(config):
@@ -147,7 +154,8 @@ def update_record(config):
         return 0
 
     except requests.exceptions.RequestException:
-        print('HTTP Request failed')
+        print('Record put HTTP Request failed')
+        sys.exit(1)
 
 
 def create_record(config):
@@ -169,7 +177,8 @@ def main():
     else:
         sys.exit(1)
 
-    create_cache_dir(config["cache_dir"])
+    if not create_cache_dir(config["cache_dir"]):
+        sys.exit(1)
 
     config["zone_id"] = get_zone_id(config)
     config["record_id"], config["record_ip"] = get_record(config)
