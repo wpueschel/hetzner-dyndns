@@ -44,6 +44,8 @@ def get_external_ip():
         if response.status_code != 200:
             raise exceptions.GetExternalIPError
 
+        return external_ip
+
     except (requests.exceptions.RequestException, exceptions.GetExternalIPError):
         print('External IP HTTP Request failed')
         sys.exit(1)
