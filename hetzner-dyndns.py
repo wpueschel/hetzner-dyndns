@@ -41,9 +41,10 @@ def get_external_ip():
     try:
         response = requests.get(url="https://api.ipify.org")
         external_ip = response.text
-        return external_ip
+        if response.status_code != 200:
+            raise exceptions.GetExternalIPError
 
-    except requests.exceptions.RequestException:
+    except (requests.exceptions.RequestException, exceptions.GetExternalIPError):
         print('External IP HTTP Request failed')
         sys.exit(1)
 
